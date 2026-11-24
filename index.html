@@ -323,12 +323,17 @@ async function csvTab(id,name,range){
    const t=await r.text();if(t.charCodeAt(0)===60)throw new Error('Sheet is not shared publicly');return parseCSV(t)}
   catch(e){if(a>=2||/shared|HTTP 4(?!29)/.test(e.message))throw e;await new Promise(k=>setTimeout(k,900*(a+1)))}
   finally{clearTimeout(to)}}}
+/* Google's CSV export blanks header text above numeric columns (headers=0), so product names go missing.
+   Re-read just the header row (all text -> kept intact) and put it back. */
+async function fixHeader(id,n,c){try{const hr=(await csvTab(id,n,`A${c.h+1}:Z${c.h+1}`))[0]||[],cur=c.rows[c.h]||[];
+ const got=hr.filter(x=>String(x==null?'':x).trim()).length,have=cur.filter(x=>String(x==null?'':x).trim()).length;
+ if(got>have)c.rows[c.h]=Array.from({length:Math.max(hr.length,cur.length)},(_,i)=>String(hr[i]==null?'':hr[i]).trim()!==''?hr[i]:cur[i])}catch(e){console.warn('Header re-read failed',n,e)}}
 const rowDate=c=>{for(let i=0;i<c.h;i++)for(const v of (c.rows[i]||[])){const d=dateOf(v);if(d)return d}return''};
 async function tabFor(id,names,kind,L){
  let last;const ck=id+L,ns=TN[ck]?[TN[ck],...names.filter(n=>n!==TN[ck])]:names;
  for(const n of ns){
   try{const c=classify(n,await csvTab(id,n));
-   if(c&&c.t===kind&&c.line==='PL-'+L){if(kind==='cov'&&!rowDate(c)){try{const r0=await csvTab(id,n,'A1:H1');c.date=(r0[0]||[]).map(dateOf).find(Boolean)||''}catch(e){}}if(TN[ck]!==n){TN[ck]=n;try{localStorage.setItem(TNK,JSON.stringify(TN))}catch(e){}}return c}
+   if(c&&c.t===kind&&c.line==='PL-'+L){await fixHeader(id,n,c);if(kind==='cov'&&!rowDate(c)){try{const r0=await csvTab(id,n,'A1:H1');c.date=(r0[0]||[]).map(dateOf).find(Boolean)||''}catch(e){}}if(TN[ck]!==n){TN[ck]=n;try{localStorage.setItem(TNK,JSON.stringify(TN))}catch(e){}}return c}
    last=new Error('wrong tab '+n)}
   catch(e){last=e;if(/shared/.test(e.message))throw e}}
  throw last}
@@ -357,6 +362,7 @@ function build(REGS,COVS){
   const ti=tot0>=0?tot0:H.findIndex(h=>h.includes('total'));
   const pcols=[];if(ti<0)for(let j=nm+1;j<H.length;j++)if(H[j])pcols.push([j,canon(s.rows[s.h][j])]);
   const prod=pcols.length>1,tot=ti>=0?ti:(prod?-1:numCol(s.rows,s.h,nm));
+  if(!prod&&ti<0)throw new Error('Register header of '+s.line+' could not be read (product columns missing) - press Refresh data');
   pcols.forEach(p=>{if(prod&&!(p[1] in ci)){ci[p[1]]=cats.length;cats.push(p[1])}});
   for(let i=s.h+1;i<s.rows.length;i++){const x=s.rows[i];if(!x||x[c]==null||x[c]==='')continue;
    const code=String(x[c]).trim(),key=s.line+'|'+code;let o=m.get(key);
