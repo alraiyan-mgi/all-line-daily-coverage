@@ -223,7 +223,9 @@ function fillSel(){const ids={l:'fl',w:'fw',r:'fr',t:'ft',c:'fc'},lab={l:'All li
   const lb=v=>k==='c'?(nmOf.get(v)||v):v,esc=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
   const vals=[...new Set(up.map(r=>r[k]))].sort((a,b)=>lb(a)<lb(b)?-1:lb(a)>lb(b)?1:0);if(F[k]&&!vals.includes(F[k]))F[k]='';
   $(ids[k]).innerHTML=`<option value="">${lab[k]}</option>`+vals.map(v=>`<option value="${esc(v)}"${v===F[k]?' selected':''}>${esc(lb(v))}</option>`).join('')});
- $('fk').innerHTML='<option value="">All products</option>'+CATS.slice().sort().map(v=>`<option${v===F.k?' selected':''}>${v}</option>`).join('');}
+ {const ks=new Set();filtered().forEach(r=>{Object.keys(r.v).forEach(i=>ks.add(+i));if(r.rv)Object.keys(r.rv).forEach(i=>ks.add(+i))});
+  const pl=CATS.filter((c,i)=>ks.has(i)).sort();if(F.k&&!pl.includes(F.k))F.k='';
+  $('fk').innerHTML='<option value="">All products</option>'+pl.map(v=>`<option${v===F.k?' selected':''}>${v}</option>`).join('');}}
 function filtered(){const q=F.q.toLowerCase();return R.filter(r=>keys.every(k=>!F[k]||r[k]===F[k])&&(!q||r.s.includes(q)))}
 const icons={reg:'<path d="M4 9l1-5h14l1 5M5 9v11h14V9M9 20v-6h6v6"/>',cov:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',pct:'<circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/>',rt:'<path d="M12 21v-8M12 13L6 6M12 13l6-7M6 6H3M6 6v3M18 6h3M18 6v3"/>',vis:'<circle cx="13" cy="4.5" r="2"/><path d="M10 21l2-7 3 3v4M12 14l-1-5 4 1 2 3M10 9l-3 4"/>',zero:'<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',avg:'<path d="M4 17a8 8 0 1116 0M12 17l4-5"/>'};
 function all(){fillSel();draw();}
