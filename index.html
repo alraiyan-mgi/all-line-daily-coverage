@@ -291,10 +291,10 @@ let rzT,lastW=innerWidth;window.addEventListener('resize',()=>{if(innerWidth===l
 let roW=0,roT;new ResizeObserver(()=>{const w=$('cw').clientWidth;if(!w||Math.abs(w-roW)<2)return;roW=w;clearTimeout(roT);roT=setTimeout(()=>{if(R.length){noAnim=true;chart(filtered());noAnim=false}},60)}).observe($('cw'));
 /* ===== Google Sheets loader (Coverage + Register) ===== */
 const COV_ID='1Rcg7NVVMP-D2VUfLHCC-p5fZmNWv9a2Ql-JbyBe9rQU',REG_ID='1I1wYKTxPBvnhTyzC9kstBeofQ0Z__9xb5me1V23F3GI';
-const LINES=['A','B'];
+const LINES=['A','B','C','D','F','G','U'];
 const COV_T=L=>[`PL-${L} Coverage Outlet`,`PL-${L} Coverage Outlet `,`PL-${L}`],REG_T=L=>[`PL-${L} Registar Outlast`,`PL-${L} Registar Outlast `,`PL-${L}`];
 let WARN='';
-const CK='cov-gs-cache-ab-v4',REFRESH_MS=10*60*1000;
+const CK='cov-gs-cache-all-v5',REFRESH_MS=10*60*1000;
 const num=v=>{const n=parseFloat(String(v==null?'':v).replace(/,/g,''));return isNaN(n)?0:n};
 let UNM=0,lastRaw='',lastLoad=0;
 function parseCSV(t){const rows=[];let row=[],f='',q=false;
@@ -348,7 +348,7 @@ async function fromXlsx(id,kind){
  const wb=XLSX.read(await r.arrayBuffer(),{type:'array',cellDates:true});
  return wb.SheetNames.map(n=>classify(n,XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:null}))).filter(c=>c&&c.t===kind&&LINES.some(L=>c.line==='PL-'+L))}
 async function getSet(id,tpl,kind){
- const got=(await pool(LINES,4,L=>tabFor(id,tpl(L),kind,L).finally(tick))).filter(Boolean);
+ const got=(await pool(LINES,7,L=>tabFor(id,tpl(L),kind,L).finally(tick))).filter(Boolean);
  if(got.length===LINES.length)return got;
  try{const x=await fromXlsx(id,kind);if(x.length>got.length)return x}catch(e){console.warn('Full download failed',e)}
  return got}
